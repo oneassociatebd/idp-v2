@@ -1,4 +1,4 @@
-ARG BUN_VERSION=latest
+ARG BUN_VERSION=1.3
 FROM oven/bun:${BUN_VERSION} AS builder
 
 WORKDIR /app
@@ -22,9 +22,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV APP_PORT=3000
 
-# Production dependencies
-COPY package.json bun.lock* ./
-RUN bun install --production --frozen-lockfile
+# Dependencies from builder stage (eliminates slow 2nd network download and cuts deployment time)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/bun.lock ./bun.lock
+COPY --from=builder /app/node_modules ./node_modules
 
 # Backend source
 COPY src ./src
